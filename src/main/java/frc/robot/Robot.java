@@ -151,8 +151,7 @@ public class Robot extends TimedRobot {
 
     double intakeSpeed = opController.getRightY() * INTAKE_OUTPUT_POWER;
 
-    double armSpeed = opController.getLeftY();
-    armSpeed = armSpeed * ARM_OUTPUT_POWER;
+    double armSpeed = opController.getLeftY() * ARM_OUTPUT_POWER;
 /*
     double forward;
     double turn;
