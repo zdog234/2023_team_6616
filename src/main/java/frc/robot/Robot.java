@@ -4,22 +4,26 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.filter.SlewRateLimiter;
-/* default impots */
+// import edu.wpi.first.math.filter.SlewRateLimiter;
+/* default imports */
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+ // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /* controller imports */
 /* spark max improts */
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import javax.lang.model.util.ElementScanner14;
-
-/* victor imports */
+/* victor imports
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+*/
+
+//import SmartDashboard
+//import edu.wpi.first.wpilibj.smartdashboard.*;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -39,16 +43,23 @@ public class Robot extends TimedRobot {
   CANSparkMax m_DriveRightSpark3 = new CANSparkMax(3, MotorType.kBrushed);
  // VictorSPX m_DriveRightVictor = new VictorSPX(3);
   CANSparkMax m_DriveRightSpark4 = new CANSparkMax(4, MotorType.kBrushed);
-  // arm motors
-  // arm motors go here
   // intake motors
-  // intake motors go here
+  CANSparkMax m_IntakeSpark = new CANSparkMax(6, MotorType.kBrushless);
+  // arm motors
+  CANSparkMax m_ArmSpark = new CANSparkMax(5, MotorType.kBrushless);
 
   XboxController driveController = new XboxController(0);
   XboxController opController = new XboxController(1);
 
+
+  static final int ARM_CURRENT_LIMIT_A = 20;
+  static final double ARM_OUTPUT_POWER = 0.4;
+
   /* globalish variables */
   double autoTimeElapsed = 0;
+
+  //SlewRateLimiter forwardFilter;
+  //SlewRateLimiter turnFilter;
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -57,6 +68,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    //SmartDashboard smartDashboard = new SmartDashboard();
+
+    // SlewRateLimiter forwardFilter will limit forward acceleration to 0.5 units per loop
+  //  forwardFilter = new SlewRateLimiter(0.25, -0.25, 0);
+  //  turnFilter = new SlewRateLimiter(0.5, -0.5, 0);
+
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
@@ -67,7 +84,13 @@ public class Robot extends TimedRobot {
     m_DriveRightSpark3.setInverted(true);
     m_DriveRightSpark4.setInverted(true);
     // configure intake motors
-    // configure amrm motors
+    m_IntakeSpark.setInverted(false);
+    // configure arm motors
+    m_ArmSpark.setInverted(false);
+    //m_ArmSpark.setIdleMode(IdleMode.kBrake);
+
+    
+
   }
 
   @Override
@@ -112,7 +135,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopInit() {
-
   }
 
   // This function is called periodically during teleoperated mode.//
@@ -120,42 +142,45 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     /* drive Controls */
 
-    //double forward = driveController.getLeftY();
-    //double turn = -driveController.getRightX();
-    //double leftSpeed = forward + turn;
-    //double rightSpeed = forward - turn;
+    double forward = driveController.getLeftY();
+    double turn = -driveController.getRightX();
 
+    double leftSpeed = forward + turn;
+    double rightSpeed = forward - turn;
+
+    double intakeSpeed = opController.getRightY();
+
+    double armSpeed = opController.getLeftY();
+/*
     double forward;
     double turn;
 
-    if (driveController.getLeftY() > 0.15 ||
-        driveController.getLeftY() < -0.15) {
+    if (driveController.getLeftY() >= 0.00 ||
+        driveController.getLeftY() < -0.0) {
       forward = driveController.getLeftY();
     }
     else{
       forward = 0.0;
     }
 
-    if (driveController.getRightX() > 0.15 ||
-        driveController.getRightX() < -0.15) {
+    if (driveController.getRightX() >= 0.00 ||
+        driveController.getRightX() < -0.00) {
       turn = -driveController.getRightX();
     }
     else{
       turn = 0.0;
-    }
-    
+    }*/
 
-    // SlewRateLimiter forwardFilter will limit forward acceleration to 0.5 units per loop
-    SlewRateLimiter forwardFilter = new SlewRateLimiter(0.5, -0.5, forward);
-    SlewRateLimiter turnFilter = new SlewRateLimiter(0.5, -0.5, turn);
 
-    double TestFilteredForward = forwardFilter.calculate(forward); // + turn;
+    //double TestFilteredForward = forwardFilter.calculate(forward); // + turn;
+    //String StringTestFilteredForward = Double.toString(TestFilteredForward);
     //double TestFilteredRightSpeed = forwardFilter.calculate(forward); // - turn; 
-    System.out.print("Test Filterded Forward Speed is: "+ TestFilteredForward);
-   // System.out.print("Test Filterded Right Speed is: "+ TestFilteredRightSpeed);
+    //boolean test = SmartDashboard.putString("Test Filterded Forward Speed is: ", StringTestFilteredForward);
 
-    double leftSpeed = forward + turn;
-    double rightSpeed = forward - turn;
+   //System.out.println("Raw Speed is: "+forward+" and Filterded Right Speed is: "+ TestFilteredForward);
+
+    //double leftSpeed = forward + turn;
+    //double rightSpeed = forward - turn;
 
     // Print speed to console (not sure if this will work)
     /*System.out.print("Left Speed is: " + leftSpeed);
@@ -171,6 +196,13 @@ public class Robot extends TimedRobot {
     m_DriveLeftSpark2.set(leftSpeed);
     m_DriveRightSpark3.set(rightSpeed);
     m_DriveRightSpark4.set(rightSpeed);
+
+    // Set Intake
+    m_IntakeSpark.set(intakeSpeed);
+    
+
+    // Set Arm
+    m_ArmSpark.set(armSpeed);
 
   }
 
