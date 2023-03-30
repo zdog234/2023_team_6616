@@ -52,8 +52,9 @@ public class Robot extends TimedRobot {
   XboxController opController = new XboxController(1);
 
 
-  static final int ARM_CURRENT_LIMIT_A = 20;
+
   static final double ARM_OUTPUT_POWER = 0.4;
+  static final double INTAKE_OUTPUT_POWER = 1;
 
   /* globalish variables */
   double autoTimeElapsed = 0;
@@ -148,9 +149,10 @@ public class Robot extends TimedRobot {
     double leftSpeed = forward + turn;
     double rightSpeed = forward - turn;
 
-    double intakeSpeed = opController.getRightY();
+    double intakeSpeed = opController.getRightY() * INTAKE_OUTPUT_POWER;
 
     double armSpeed = opController.getLeftY();
+    armSpeed = armSpeed * ARM_OUTPUT_POWER;
 /*
     double forward;
     double turn;
