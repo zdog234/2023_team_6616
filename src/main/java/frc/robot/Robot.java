@@ -4,12 +4,16 @@
 
 package frc.robot;
 
-// import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.MathSharedStore;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 /* default imports */
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
  // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /* controller imports */
@@ -55,11 +59,14 @@ public class Robot extends TimedRobot {
 
   static final double ARM_OUTPUT_POWER = 0.4;
   static final double INTAKE_OUTPUT_POWER = 1;
+  // static final Path debugFile = Path.of("C:/Users/Mecha/OneDrive/Documents/debug_files", "debug_file_" + MathSharedStore.getTimestamp() + ".csv");
 
   /* globalish variables */
   double autoTimeElapsed = 0;
 
-  //SlewRateLimiter forwardFilter;
+  SlewRateLimiter forwardFilter; 
+  SlewRateLimiter forwardFilter_posAxis; 
+  SlewRateLimiter forwardFilter_negAxis;     
   //SlewRateLimiter turnFilter;
 
   /**
@@ -72,7 +79,14 @@ public class Robot extends TimedRobot {
     //SmartDashboard smartDashboard = new SmartDashboard();
 
     // SlewRateLimiter forwardFilter will limit forward acceleration to 0.5 units per loop
-  //  forwardFilter = new SlewRateLimiter(0.25, -0.25, 0);
+    forwardFilter = new SlewRateLimiter(1, -1, 0);
+    // if controller axis is positive, we want to be able to go to zero fast
+    forwardFilter_posAxis = new SlewRateLimiter(1, -1000, 0);
+ 
+
+    forwardFilter_negAxis = new SlewRateLimiter(1000, -1, 0);
+
+  
   //  turnFilter = new SlewRateLimiter(0.5, -0.5, 0);
 
     // We need to invert one side of the drivetrain so that positive voltages
@@ -143,18 +157,24 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     /* drive Controls */
 
-    double forward = driveController.getLeftY();
+    double rawForward = driveController.getLeftY();
+
+    double forward; // + turn;
+    if (rawForward >= 0) {
+      forward = forwardFilter_posAxis.calculate(rawForward);
+      // forwardFilter_negAxis.calculate(forward);
+    } else {
+      forward = forwardFilter_negAxis.calculate(rawForward);
+      // forwardFilter_posAxis.calculate(forward);
+    }
     double turn = -driveController.getRightX();
 
     double leftSpeed = forward + turn;
     double rightSpeed = forward - turn;
 
     double intakeSpeed = opController.getRightY() * INTAKE_OUTPUT_POWER;
-
     double armSpeed = opController.getLeftY() * ARM_OUTPUT_POWER;
 /*
-    double forward;
-    double turn;
 
     if (driveController.getLeftY() >= 0.00 ||
         driveController.getLeftY() < -0.0) {
@@ -178,8 +198,8 @@ public class Robot extends TimedRobot {
     //double TestFilteredRightSpeed = forwardFilter.calculate(forward); // - turn; 
     //boolean test = SmartDashboard.putString("Test Filterded Forward Speed is: ", StringTestFilteredForward);
 
-   //System.out.println("Raw Speed is: "+forward+" and Filterded Right Speed is: "+ TestFilteredForward);
-
+   System.out.println("Raw Speed is: "+rawForward+" and Filterded Right Speed is: "+ forward+" at time "+MathSharedStore.getTimestamp());
+    // Files.writeString(debugFile, rawForward + "," + forward + "," + MathSharedStore.getTimestamp() + "\n");
     //double leftSpeed = forward + turn;
     //double rightSpeed = forward - turn;
 
