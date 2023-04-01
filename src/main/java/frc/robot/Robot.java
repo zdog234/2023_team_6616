@@ -66,7 +66,8 @@ public class Robot extends TimedRobot {
 
   SlewRateLimiter forwardFilter; 
   SlewRateLimiter forwardFilter_posAxis; 
-  SlewRateLimiter forwardFilter_negAxis;     
+  SlewRateLimiter forwardFilter_negAxis;  
+  SlewRateLimiter intakeFilter;   
   //SlewRateLimiter turnFilter;
 
   /**
@@ -81,11 +82,11 @@ public class Robot extends TimedRobot {
     // SlewRateLimiter forwardFilter will limit forward acceleration to 0.5 units per loop
     forwardFilter = new SlewRateLimiter(1, -1, 0);
     // if controller axis is positive, we want to be able to go to zero fast
-    forwardFilter_posAxis = new SlewRateLimiter(1, -1000, 0);
+    forwardFilter_posAxis = new SlewRateLimiter(1, -1, 0);
  
-
-    forwardFilter_negAxis = new SlewRateLimiter(1000, -1, 0);
-
+    forwardFilter_negAxis = new SlewRateLimiter(1, -1, 0);
+    
+    intakeFilter = new SlewRateLimiter(1, -1, 0);
   
   //  turnFilter = new SlewRateLimiter(0.5, -0.5, 0);
 
@@ -172,7 +173,7 @@ public class Robot extends TimedRobot {
     double leftSpeed = forward + turn;
     double rightSpeed = forward - turn;
 
-    double intakeSpeed = opController.getRightY() * INTAKE_OUTPUT_POWER;
+    double intakeSpeed = intakeFilter.calculate(opController.getRightY() * INTAKE_OUTPUT_POWER);
     double armSpeed = opController.getLeftY() * ARM_OUTPUT_POWER;
 /*
 
@@ -198,8 +199,10 @@ public class Robot extends TimedRobot {
     //double TestFilteredRightSpeed = forwardFilter.calculate(forward); // - turn; 
     //boolean test = SmartDashboard.putString("Test Filterded Forward Speed is: ", StringTestFilteredForward);
 
-   System.out.println("Raw Speed is: "+rawForward+" and Filterded Right Speed is: "+ forward+" at time "+MathSharedStore.getTimestamp());
-    // Files.writeString(debugFile, rawForward + "," + forward + "," + MathSharedStore.getTimestamp() + "\n");
+   //System.out.println("Raw Speed is: "+rawForward+" and Filterded Right Speed is: "+ forward+" at time "+MathSharedStore.getTimestamp());
+   System.out.println("Intake speed is: "+intakeSpeed+" at time "+MathSharedStore.getTimestamp());
+    
+   // Files.writeString(debugFile, rawForward + "," + forward + "," + MathSharedStore.getTimestamp() + "\n");
     //double leftSpeed = forward + turn;
     //double rightSpeed = forward - turn;
 
