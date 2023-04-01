@@ -56,15 +56,15 @@ public class Robot extends TimedRobot {
   XboxController opController = new XboxController(1);
 
 
-
   static final double ARM_OUTPUT_POWER = 0.4;
+  static final double ARM_MAXPOWER = 0.5 * ARM_OUTPUT_POWER;
   static final double INTAKE_OUTPUT_POWER = 1;
   // static final Path debugFile = Path.of("C:/Users/Mecha/OneDrive/Documents/debug_files", "debug_file_" + MathSharedStore.getTimestamp() + ".csv");
 
   /* globalish variables */
   double autoTimeElapsed = 0;
 
-  SlewRateLimiter forwardFilter; 
+  SlewRateLimiter armFilter; 
   SlewRateLimiter forwardFilter_posAxis; 
   SlewRateLimiter forwardFilter_negAxis;  
   SlewRateLimiter intakeFilter;   
@@ -80,7 +80,7 @@ public class Robot extends TimedRobot {
     //SmartDashboard smartDashboard = new SmartDashboard();
 
     // SlewRateLimiter forwardFilter will limit forward acceleration to 0.5 units per loop
-    forwardFilter = new SlewRateLimiter(1, -1, 0);
+    armFilter = new SlewRateLimiter(0.5, -0.5, 0);
     // if controller axis is positive, we want to be able to go to zero fast
     forwardFilter_posAxis = new SlewRateLimiter(1, -1, 0);
  
@@ -174,7 +174,16 @@ public class Robot extends TimedRobot {
     double rightSpeed = forward - turn;
 
     double intakeSpeed = intakeFilter.calculate(opController.getRightY() * INTAKE_OUTPUT_POWER);
-    double armSpeed = opController.getLeftY() * ARM_OUTPUT_POWER;
+    double armSpeed = -( opController.getLeftY() * ARM_OUTPUT_POWER );
+    if (armSpeed <= -ARM_MAXPOWER) {
+      armSpeed = -ARM_MAXPOWER;
+    }
+    else {
+      if (armSpeed > ARM_MAXPOWER) {
+      armSpeed = ARM_MAXPOWER;
+      }
+    }
+    armSpeed = armFilter.calculate(armSpeed);
 /*
 
     if (driveController.getLeftY() >= 0.00 ||
