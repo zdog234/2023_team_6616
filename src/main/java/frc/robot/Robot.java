@@ -163,10 +163,10 @@ public class Robot extends TimedRobot {
     double forward; // + turn;
     if (rawForward >= 0) {
       forward = forwardFilter_posAxis.calculate(rawForward);
-      // forwardFilter_negAxis.calculate(forward);
+      forwardFilter_negAxis.reset(0);
     } else {
       forward = forwardFilter_negAxis.calculate(rawForward);
-      // forwardFilter_posAxis.calculate(forward);
+       forwardFilter_posAxis.reset(0);
     }
     double turn = -driveController.getRightX();
 
